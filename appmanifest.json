@@ -1,7 +1,7 @@
 {
-	"name": "Santas Platform",
-	"short_name": "Santas Platform",
-	"description": "Help Santa find all his presents in this incredibly fun platformer game and\ntest your skills in a world full of obstacles and angry snowmen\n\nCollect and unlock new characters with new ones every week.\n\nGet through 16 large-scale levels with different obstacles on each one. New levels every week!\n\nSuper simple controls and a classic platform experience",
+	"name": "Ong gia Noel lam can cuoc",
+	"short_name": "Ong gia Noel lam can cuoc",
+	"description": "Ong gia Noel lam can cuoc",
 	"start_url": "index.html",
 	"display": "fullscreen",
 	"orientation": "landscape",

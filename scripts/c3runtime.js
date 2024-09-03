@@ -4615,20 +4615,20 @@ OnMovement(){return true}}}{const C3=self.C3;const CURSOR_STYLES=["auto","pointe
 2,600];this._listenerForwardVec=[0,0,-1];this._listenerUpVec=[0,1,0];this._referenceDistance=600;this._maxDistance=1E4;this._rolloffFactor=1;this._listenerInst=null;this._loadListenerUid=-1;this._masterVolume=1;this._isSilent=false;this._sampleRate=0;this._audioContextState="suspended";this._outputLatency=0;this._effectCount=new Map;this._preloadTotal=0;this._preloadCount=0;this._bufferMetadata=new Map;this._remoteUrls=new Map;let latencyHint="interactive";if(properties){this._timeScaleMode=properties[0];
 this._saveLoadMode=properties[1];this._playInBackground=properties[2];latencyHint=LATENCY_HINTS[properties[3]];this._enableMultiTags=properties[4];this._panningModel=properties[5];this._distanceModel=properties[6];this._listenerPos[2]=properties[7];this._referenceDistance=properties[8];this._maxDistance=properties[9];this._rolloffFactor=properties[10]}this._lastAIState=[];this._lastFxState=[];this._lastAnalysersData=[];this.AddDOMMessageHandlers([["state",e=>this._OnUpdateState(e)],["audiocontext-state",
 e=>this._OnAudioContextStateChanged(e)],["fxstate",e=>this._OnUpdateFxState(e)],["trigger",e=>this._OnTrigger(e)],["buffer-metadata",e=>this._OnBufferMetadata(e)]]);const rt=this.GetRuntime().Dispatcher();this._disposables=new C3.CompositeDisposable(C3.Disposable.From(rt,"instancedestroy",e=>this._OnInstanceDestroyed(e.instance)),C3.Disposable.From(rt,"afterload",()=>this._OnAfterLoad()),C3.Disposable.From(rt,"suspend",()=>this._OnSuspend()),C3.Disposable.From(rt,"resume",()=>this._OnResume()));const isSafari=
-C3.Platform.Browser==="Safari";const isWKWebView=this._runtime.IsiOSWebView();const isFileProtocol=this._runtime.GetAssetManager().IsFileProtocol();const isv175plus=isSafari&&C3.Platform.BrowserVersionNumber>=17.5||isWKWebView&&parseFloat(C3.Platform.OSVersion)>=17.5;const usePlayMusicAsSoundWorkaround=(isSafari||isWKWebView)&&(!isv175plus||isFileProtocol);this._runtime.AddLoadPromise(this.PostToDOMAsync("create-audio-context",{"preloadList":this._runtime.GetAssetManager().GetAudioToPreload().map(o=>
-({"originalUrl":o.originalUrl,"url":o.url,"type":o.type,"fileSize":o.fileSize})),"timeScaleMode":this._timeScaleMode,"latencyHint":latencyHint,"panningModel":this._panningModel,"distanceModel":this._distanceModel,"refDistance":this._referenceDistance,"maxDistance":this._maxDistance,"rolloffFactor":this._rolloffFactor,"listenerPos":this._listenerPos,"usePlayMusicAsSoundWorkaround":usePlayMusicAsSoundWorkaround}).then(info=>{this._sampleRate=info["sampleRate"];this._audioContextState=info["audioContextState"];
-this._outputLatency=info["outputLatency"]}));this._StartTicking()}Release(){this._listenerInst=null;super.Release()}_SplitTags(tagStr){if(this._enableMultiTags)return tagStr.split(" ").filter(s=>!!s);else return tagStr?[tagStr]:[]}_MatchTagLists(tagArr1,tagArr2){for(const t2 of tagArr2){let found=false;for(const t1 of tagArr1)if(C3.equalsNoCase(t1,t2)){found=true;break}if(!found)return false}return true}_MatchTagListToStr(tagArr,tagStr){return this._MatchTagLists(tagArr,this._SplitTags(tagStr))}_AddActionPromise(promise){this.GetPlugin()._AddActionPromise(promise)}_OnInstanceDestroyed(inst){if(this._listenerInst===
-inst)this._listenerInst=null}DbToLinearNoCap(x){return Math.pow(10,x/20)}DbToLinear(x){const v=this.DbToLinearNoCap(x);if(!isFinite(v))return 0;return Math.max(Math.min(v,1),0)}LinearToDbNoCap(x){return Math.log(x)/Math.log(10)*20}LinearToDb(x){return this.LinearToDbNoCap(Math.max(Math.min(x,1),0))}_OnSuspend(){if(this._playInBackground)return;this.PostToDOM("set-suspended",{"isSuspended":true})}_OnResume(){if(this._playInBackground)return;this.PostToDOM("set-suspended",{"isSuspended":false})}_OnUpdateState(e){const tickCount=
-e["tickCount"];this._outputLatency=e["outputLatency"];const preservePlaceholders=this._lastAIState.filter(ai=>ai.hasOwnProperty("placeholder")&&(ai["placeholder"]>tickCount||ai["placeholder"]===-1));this._lastAIState=e["audioInstances"];this._lastAnalysersData=e["analysers"];if(preservePlaceholders.length>0)C3.appendArray(this._lastAIState,preservePlaceholders)}_OnBufferMetadata(e){this._bufferMetadata.set(e["originalUrl"],{duration:e["duration"]})}_OnAudioContextStateChanged(e){this._audioContextState=
-e["audioContextState"]}GetAudioContextState(){if(this._runtime.IsExportToVideo())return"running";else return this._audioContextState}_OnUpdateFxState(e){this._lastFxState=e["fxstate"]}_GetFirstAudioStateByTags(tagStr){const tagArr=this._SplitTags(tagStr);for(const a of this._lastAIState)if(this._MatchTagLists(a["tags"],tagArr))return a;return null}_IsTagPlaying(tagStr){const tagArr=this._SplitTags(tagStr);return this._lastAIState.some(ai=>this._MatchTagLists(ai["tags"],tagArr)&&ai["isPlaying"])}_MaybeMarkAsPlaying(originalUrl,
-tagStr,isMusic,isLooping,vol){if(this._IsTagPlaying(tagStr))return null;const bufferMeta=this._bufferMetadata.get(originalUrl);const state={"tags":this._SplitTags(tagStr),"duration":bufferMeta?bufferMeta.duration:0,"volume":vol,"isPlaying":true,"playbackTime":0,"playbackRate":1,"uid":-1,"bufferOriginalUrl":originalUrl,"bufferUrl":"","bufferType":"","isMusic":isMusic,"isLooping":isLooping,"isMuted":false,"resumePosition":0,"pan":null,"placeholder":-1};this._lastAIState.push(state);return state}async _OnTrigger(e){const type=
-e["type"];this._triggerTags=e["tags"];const aiId=e["aiid"];if(type==="ended"){for(const aiState of this._lastAIState)if(aiState["aiid"]===aiId){aiState["isPlaying"]=false;break}await this.TriggerAsync(C3.Plugins.Audio.Cnds.OnEnded)}else if(type==="fade-ended")await this.TriggerAsync(C3.Plugins.Audio.Cnds.OnFadeEnded)}_MatchTriggerTag(tagStr){return this._MatchTagListToStr(this._triggerTags,tagStr)}Tick(){const o={"timeScale":this._runtime.GetTimeScale(),"gameTime":this._runtime.GetGameTimeRaw(),"instPans":this.GetInstancePans(),
-"tickCount":this._runtime.GetTickCountNoSave()};if(this._listenerInst){const wi=this._listenerInst.GetWorldInfo();this._listenerPos[0]=wi.GetX();this._listenerPos[1]=wi.GetY();o["listenerPos"]=this._listenerPos;o["listenerOrientation"]=[...this._listenerForwardVec,...this._listenerUpVec]}this.PostToDOM("tick",o)}rotatePtAround(px,py,a,ox,oy){if(a===0)return[px,py];const sin_a=Math.sin(a);const cos_a=Math.cos(a);px-=ox;py-=oy;const left_sin_a=px*sin_a;const top_sin_a=py*sin_a;const left_cos_a=px*cos_a;
-const top_cos_a=py*cos_a;px=left_cos_a-top_sin_a;py=top_cos_a+left_sin_a;px+=ox;py+=oy;return[px,py]}GetInstancePans(){return this._lastAIState.filter(ai=>ai["uid"]!==-1).map(ai=>this._runtime.GetInstanceByUID(ai["uid"])).filter(inst=>inst).map(inst=>{const wi=inst.GetWorldInfo();const layerAngle=wi.GetLayer().GetAngle();const [x,y]=this.rotatePtAround(wi.GetX(),wi.GetY(),-layerAngle,this._listenerPos[0],this._listenerPos[1]);return{"uid":inst.GetUID(),"x":x,"y":y,"z":wi.GetTotalZElevation(),"angle":wi.GetAngle()-
-layerAngle}})}GetAnalyserData(tagStr,index){for(const o of this._lastAnalysersData)if(o.index===index&&C3.equalsNoCase(o["tag"],tagStr))return o;return null}_IncrementEffectCount(tagStr){for(const tag of this._SplitTags(tagStr)){const lowerTag=tag.toLowerCase();this._effectCount.set(lowerTag,(this._effectCount.get(lowerTag)||0)+1)}}_ShouldSave(ai){if(ai.hasOwnProperty("placeholder"))return false;if(this._saveLoadMode===3)return false;else if(ai["isMusic"]&&this._saveLoadMode===1)return false;else if(!ai["isMusic"]&&
-this._saveLoadMode===2)return false;else return true}SaveToJson(){return{"isSilent":this._isSilent,"masterVolume":this._masterVolume,"listenerZ":this._listenerPos[2],"listenerForwardVec":this._listenerForwardVec,"listenerUpVec":this._listenerUpVec,"listenerUid":this._listenerInst?this._listenerInst.GetUID():-1,"remoteUrls":[...this._remoteUrls.entries()],"playing":this._lastAIState.filter(ai=>this._ShouldSave(ai)),"effects":this._lastFxState,"analysers":this._lastAnalysersData}}LoadFromJson(o){this._isSilent=
-o["isSilent"];this._masterVolume=o["masterVolume"];this._listenerPos[2]=o["listenerZ"];this._listenerInst=null;this._loadListenerUid=o["listenerUid"];if(o.hasOwnProperty("listenerForwardVec"))this._listenerForwardVec=o["listenerForwardVec"];else this._listenerForwardVec=[0,0,-1];if(o.hasOwnProperty("listenerUpVec"))this._listenerUpVec=o["listenerUpVec"];else this._listenerUpVec=[0,1,0];this._remoteUrls.clear();if(o["remoteUrls"])for(const [k,v]of o["remoteUrls"])this._remoteUrls.set(k,v);this._lastAIState=
-o["playing"];for(const a of this._lastAIState)if(a.hasOwnProperty("tag")&&!a.hasOwnProperty("tags"))a["tags"]=[a["tag"]].filter(s=>!!s);this._lastFxState=o["effects"];this._lastAnalysersData=o["analysers"]}_OnAfterLoad(){if(this._loadListenerUid!==-1){this._listenerInst=this._runtime.GetInstanceByUID(this._loadListenerUid);this._loadListenerUid=-1;if(this._listenerInst){const wi=this._listenerInst.GetWorldInfo();this._listenerPos[0]=wi.GetX();this._listenerPos[1]=wi.GetY()}}for(const ai of this._lastAIState){const info=
+C3.Platform.Browser==="Safari";const isWKWebView=this._runtime.IsiOSWebView();const isFileProtocol=this._runtime.GetAssetManager().IsFileProtocol();const usePlayMusicAsSoundWorkaround=isSafari||isWKWebView||isFileProtocol;this._runtime.AddLoadPromise(this.PostToDOMAsync("create-audio-context",{"preloadList":this._runtime.GetAssetManager().GetAudioToPreload().map(o=>({"originalUrl":o.originalUrl,"url":o.url,"type":o.type,"fileSize":o.fileSize})),"timeScaleMode":this._timeScaleMode,"latencyHint":latencyHint,
+"panningModel":this._panningModel,"distanceModel":this._distanceModel,"refDistance":this._referenceDistance,"maxDistance":this._maxDistance,"rolloffFactor":this._rolloffFactor,"listenerPos":this._listenerPos,"usePlayMusicAsSoundWorkaround":usePlayMusicAsSoundWorkaround}).then(info=>{this._sampleRate=info["sampleRate"];this._audioContextState=info["audioContextState"];this._outputLatency=info["outputLatency"]}));this._StartTicking()}Release(){this._listenerInst=null;super.Release()}_SplitTags(tagStr){if(this._enableMultiTags)return tagStr.split(" ").filter(s=>
+!!s);else return tagStr?[tagStr]:[]}_MatchTagLists(tagArr1,tagArr2){for(const t2 of tagArr2){let found=false;for(const t1 of tagArr1)if(C3.equalsNoCase(t1,t2)){found=true;break}if(!found)return false}return true}_MatchTagListToStr(tagArr,tagStr){return this._MatchTagLists(tagArr,this._SplitTags(tagStr))}_AddActionPromise(promise){this.GetPlugin()._AddActionPromise(promise)}_OnInstanceDestroyed(inst){if(this._listenerInst===inst)this._listenerInst=null}DbToLinearNoCap(x){return Math.pow(10,x/20)}DbToLinear(x){const v=
+this.DbToLinearNoCap(x);if(!isFinite(v))return 0;return Math.max(Math.min(v,1),0)}LinearToDbNoCap(x){return Math.log(x)/Math.log(10)*20}LinearToDb(x){return this.LinearToDbNoCap(Math.max(Math.min(x,1),0))}_OnSuspend(){if(this._playInBackground)return;this.PostToDOM("set-suspended",{"isSuspended":true})}_OnResume(){if(this._playInBackground)return;this.PostToDOM("set-suspended",{"isSuspended":false})}_OnUpdateState(e){const tickCount=e["tickCount"];this._outputLatency=e["outputLatency"];const preservePlaceholders=
+this._lastAIState.filter(ai=>ai.hasOwnProperty("placeholder")&&(ai["placeholder"]>tickCount||ai["placeholder"]===-1));this._lastAIState=e["audioInstances"];this._lastAnalysersData=e["analysers"];if(preservePlaceholders.length>0)C3.appendArray(this._lastAIState,preservePlaceholders)}_OnBufferMetadata(e){this._bufferMetadata.set(e["originalUrl"],{duration:e["duration"]})}_OnAudioContextStateChanged(e){this._audioContextState=e["audioContextState"]}GetAudioContextState(){if(this._runtime.IsExportToVideo())return"running";
+else return this._audioContextState}_OnUpdateFxState(e){this._lastFxState=e["fxstate"]}_GetFirstAudioStateByTags(tagStr){const tagArr=this._SplitTags(tagStr);for(const a of this._lastAIState)if(this._MatchTagLists(a["tags"],tagArr))return a;return null}_IsTagPlaying(tagStr){const tagArr=this._SplitTags(tagStr);return this._lastAIState.some(ai=>this._MatchTagLists(ai["tags"],tagArr)&&ai["isPlaying"])}_MaybeMarkAsPlaying(originalUrl,tagStr,isMusic,isLooping,vol){if(this._IsTagPlaying(tagStr))return null;
+const bufferMeta=this._bufferMetadata.get(originalUrl);const state={"tags":this._SplitTags(tagStr),"duration":bufferMeta?bufferMeta.duration:0,"volume":vol,"isPlaying":true,"playbackTime":0,"playbackRate":1,"uid":-1,"bufferOriginalUrl":originalUrl,"bufferUrl":"","bufferType":"","isMusic":isMusic,"isLooping":isLooping,"isMuted":false,"resumePosition":0,"pan":null,"placeholder":-1};this._lastAIState.push(state);return state}async _OnTrigger(e){const type=e["type"];this._triggerTags=e["tags"];const aiId=
+e["aiid"];if(type==="ended"){for(const aiState of this._lastAIState)if(aiState["aiid"]===aiId){aiState["isPlaying"]=false;break}await this.TriggerAsync(C3.Plugins.Audio.Cnds.OnEnded)}else if(type==="fade-ended")await this.TriggerAsync(C3.Plugins.Audio.Cnds.OnFadeEnded)}_MatchTriggerTag(tagStr){return this._MatchTagListToStr(this._triggerTags,tagStr)}Tick(){const o={"timeScale":this._runtime.GetTimeScale(),"gameTime":this._runtime.GetGameTimeRaw(),"instPans":this.GetInstancePans(),"tickCount":this._runtime.GetTickCountNoSave()};
+if(this._listenerInst){const wi=this._listenerInst.GetWorldInfo();this._listenerPos[0]=wi.GetX();this._listenerPos[1]=wi.GetY();o["listenerPos"]=this._listenerPos;o["listenerOrientation"]=[...this._listenerForwardVec,...this._listenerUpVec]}this.PostToDOM("tick",o)}rotatePtAround(px,py,a,ox,oy){if(a===0)return[px,py];const sin_a=Math.sin(a);const cos_a=Math.cos(a);px-=ox;py-=oy;const left_sin_a=px*sin_a;const top_sin_a=py*sin_a;const left_cos_a=px*cos_a;const top_cos_a=py*cos_a;px=left_cos_a-top_sin_a;
+py=top_cos_a+left_sin_a;px+=ox;py+=oy;return[px,py]}GetInstancePans(){return this._lastAIState.filter(ai=>ai["uid"]!==-1).map(ai=>this._runtime.GetInstanceByUID(ai["uid"])).filter(inst=>inst).map(inst=>{const wi=inst.GetWorldInfo();const layerAngle=wi.GetLayer().GetAngle();const [x,y]=this.rotatePtAround(wi.GetX(),wi.GetY(),-layerAngle,this._listenerPos[0],this._listenerPos[1]);return{"uid":inst.GetUID(),"x":x,"y":y,"z":wi.GetTotalZElevation(),"angle":wi.GetAngle()-layerAngle}})}GetAnalyserData(tagStr,
+index){for(const o of this._lastAnalysersData)if(o.index===index&&C3.equalsNoCase(o["tag"],tagStr))return o;return null}_IncrementEffectCount(tagStr){for(const tag of this._SplitTags(tagStr)){const lowerTag=tag.toLowerCase();this._effectCount.set(lowerTag,(this._effectCount.get(lowerTag)||0)+1)}}_ShouldSave(ai){if(ai.hasOwnProperty("placeholder"))return false;if(this._saveLoadMode===3)return false;else if(ai["isMusic"]&&this._saveLoadMode===1)return false;else if(!ai["isMusic"]&&this._saveLoadMode===
+2)return false;else return true}SaveToJson(){return{"isSilent":this._isSilent,"masterVolume":this._masterVolume,"listenerZ":this._listenerPos[2],"listenerForwardVec":this._listenerForwardVec,"listenerUpVec":this._listenerUpVec,"listenerUid":this._listenerInst?this._listenerInst.GetUID():-1,"remoteUrls":[...this._remoteUrls.entries()],"playing":this._lastAIState.filter(ai=>this._ShouldSave(ai)),"effects":this._lastFxState,"analysers":this._lastAnalysersData}}LoadFromJson(o){this._isSilent=o["isSilent"];
+this._masterVolume=o["masterVolume"];this._listenerPos[2]=o["listenerZ"];this._listenerInst=null;this._loadListenerUid=o["listenerUid"];if(o.hasOwnProperty("listenerForwardVec"))this._listenerForwardVec=o["listenerForwardVec"];else this._listenerForwardVec=[0,0,-1];if(o.hasOwnProperty("listenerUpVec"))this._listenerUpVec=o["listenerUpVec"];else this._listenerUpVec=[0,1,0];this._remoteUrls.clear();if(o["remoteUrls"])for(const [k,v]of o["remoteUrls"])this._remoteUrls.set(k,v);this._lastAIState=o["playing"];
+for(const a of this._lastAIState)if(a.hasOwnProperty("tag")&&!a.hasOwnProperty("tags"))a["tags"]=[a["tag"]].filter(s=>!!s);this._lastFxState=o["effects"];this._lastAnalysersData=o["analysers"]}_OnAfterLoad(){if(this._loadListenerUid!==-1){this._listenerInst=this._runtime.GetInstanceByUID(this._loadListenerUid);this._loadListenerUid=-1;if(this._listenerInst){const wi=this._listenerInst.GetWorldInfo();this._listenerPos[0]=wi.GetX();this._listenerPos[1]=wi.GetY()}}for(const ai of this._lastAIState){const info=
 this._runtime.GetAssetManager().GetProjectAudioFileUrl(ai["bufferOriginalUrl"]);if(info){ai["bufferUrl"]=info.url;ai["bufferType"]=info.type}else ai["bufferUrl"]=null}for(const fxChainData of Object.values(this._lastFxState))for(const fxData of fxChainData)if(fxData.hasOwnProperty("bufferOriginalUrl")){const info=this._runtime.GetAssetManager().GetProjectAudioFileUrl(fxData["bufferOriginalUrl"]);if(info){fxData["bufferUrl"]=info.url;fxData["bufferType"]=info.type}}this.PostToDOM("load-state",{"saveLoadMode":this._saveLoadMode,
 "timeScale":this._runtime.GetTimeScale(),"gameTime":this._runtime.GetGameTimeRaw(),"listenerPos":this._listenerPos,"listenerOrientation":[...this._listenerForwardVec,...this._listenerUpVec],"isSilent":this._isSilent,"masterVolume":this._masterVolume,"playing":this._lastAIState.filter(ai=>ai["bufferUrl"]!==null),"effects":this._lastFxState})}GetDebuggerProperties(){const fxProps=[];for(const [tag,fxChainData]of Object.entries(this._lastFxState))fxProps.push({name:"$"+tag,value:fxChainData.map(d=>d["type"]).join(", ")});
 const prefix="plugins.audio.debugger";return[{title:prefix+".tag-effects",properties:fxProps},{title:prefix+".currently-playing",properties:[{name:prefix+".currently-playing-count",value:this._lastAIState.length},...this._lastAIState.map((s,index)=>({name:"$#"+index,value:`${s["bufferOriginalUrl"]} ("${s["tags"]}") ${Math.round(s["playbackTime"]*10)/10} / ${Math.round(s["duration"]*10)/10}`}))]}]}}}
@@ -5053,10 +5053,6 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.Sprite.Cnds.OnCreated,
 		C3.Plugins.System.Acts.Wait,
 		C3.Plugins.Sprite.Acts.Destroy,
-		C3.Plugins.Sprite.Cnds.OnCollision,
-		C3.Plugins.Sprite.Cnds.IsVisible,
-		C3.Plugins.Sprite.Acts.SetCollisions,
-		C3.Plugins.Sprite.Acts.SetVisible,
 		C3.Plugins.System.Acts.SetLayoutScale,
 		C3.Plugins.LocalStorage.Acts.CheckItemExists,
 		C3.Plugins.System.Acts.SetBoolVar,
@@ -5078,6 +5074,7 @@ self.C3_GetObjectRefTable = function () {
 		C3.Behaviors.Sin.Acts.SetPeriod,
 		C3.Plugins.Particles.Cnds.OnCreated,
 		C3.Plugins.Particles.Acts.RotateClockwise,
+		C3.Plugins.Sprite.Cnds.OnCollision,
 		C3.Plugins.System.Acts.AddVar,
 		C3.Plugins.Sprite.Acts.Spawn,
 		C3.Plugins.Text.Acts.SetFontSize,
@@ -5102,6 +5099,7 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.System.Cnds.Every,
 		C3.Plugins.System.Cnds.CompareBoolVar,
 		C3.Plugins.System.Cnds.LayerVisible,
+		C3.Plugins.Sprite.Acts.SetVisible,
 		C3.Plugins.System.Cnds.OnLayoutEnd,
 		C3.Plugins.Touch.Cnds.OnTapGestureObject,
 		C3.Plugins.Sprite.Acts.SetAnimFrame,
@@ -5141,6 +5139,7 @@ self.C3_GetObjectRefTable = function () {
 		C3.Plugins.System.Acts.SubVar,
 		C3.Behaviors.Platform.Acts.SetEnabled,
 		C3.Behaviors.Sin.Acts.SetEnabled,
+		C3.Plugins.Sprite.Acts.SetCollisions,
 		C3.Plugins.Audio.Acts.SetVolume,
 		C3.Plugins.System.Acts.GoToLayoutByName,
 		C3.Plugins.Sprite.Cnds.PickByUID,
@@ -5307,6 +5306,8 @@ self.C3_JsPropNameTable = [
 	{Text11: 0},
 	{Text12: 0},
 	{Text13: 0},
+	{thuThapMongMat2: 0},
+	{enemy_sprite2: 0},
 	{BG_Parlaxx: 0},
 	{Menu: 0},
 	{Doublejump: 0},
@@ -5462,6 +5463,8 @@ self.InstanceType = {
 	Text11: class extends self.ITextInstance {},
 	Text12: class extends self.ITextInstance {},
 	Text13: class extends self.ITextInstance {},
+	thuThapMongMat2: class extends self.ITextInstance {},
+	enemy_sprite2: class extends self.ISpriteInstance {},
 	BG_Parlaxx: class extends self.ITiledBackgroundInstance {},
 	Menu: class extends self.IWorldInstance {}
 }
@@ -5566,7 +5569,6 @@ function or(l, r)
 self.C3_ExpressionFuncs = [
 		() => 1,
 		() => "Win",
-		() => -30,
 		() => 0,
 		p => {
 			const v0 = p._GetNode(0).GetVar();
@@ -5733,6 +5735,7 @@ self.C3_ExpressionFuncs = [
 		() => "Mute Sound Events",
 		() => -15,
 		() => -100,
+		() => -30,
 		() => 10,
 		() => -20,
 		() => 11,
@@ -5776,15 +5779,12 @@ self.C3_ExpressionFuncs = [
 		() => 2750,
 		() => 2754,
 		() => 2757,
-		() => 2760,
 		() => "Playerselect_Locks",
 		() => 2753,
 		() => 2749,
 		() => 2752,
 		() => 2756,
-		() => 2759,
-		() => 2762,
-		() => 2765
+		() => 2759
 ];
 
 
