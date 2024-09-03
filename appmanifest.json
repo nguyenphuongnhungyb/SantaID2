@@ -1,0 +1,42 @@
+{
+	"name": "Santas Platform",
+	"short_name": "Santas Platform",
+	"description": "Help Santa find all his presents in this incredibly fun platformer game and\ntest your skills in a world full of obstacles and angry snowmen\n\nCollect and unlock new characters with new ones every week.\n\nGet through 16 large-scale levels with different obstacles on each one. New levels every week!\n\nSuper simple controls and a classic platform experience",
+	"start_url": "index.html",
+	"display": "fullscreen",
+	"orientation": "landscape",
+	"background_color": "#ffffff",
+	"icons": [
+		{
+			"src": "icons/icon-16.png",
+			"sizes": "16x16",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-32.png",
+			"sizes": "32x32",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-64.png",
+			"sizes": "64x64",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-128.png",
+			"sizes": "128x128",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-256.png",
+			"sizes": "256x256",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	],
+	"screenshots": []
+}
